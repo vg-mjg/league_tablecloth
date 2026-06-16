@@ -40,7 +40,10 @@ namespace LeagueTablecloth
             var dst = new Rgba(size, size);
             foreach (var layer in layers)
             {
-                CompositeOver(dst, layer.Source, layer.X, layer.Y);
+                var src = layer.Source;
+                if (layer.Rot != 0)
+                    src = Rotate(src, layer.Rot);
+                CompositeOver(dst, src, layer.X, layer.Y);
             }
             return dst;
         }
@@ -85,6 +88,51 @@ namespace LeagueTablecloth
                     d[di + 3] = Blend(d[di + 3], a, a);
                 }
             }
+        }
+
+        public static Rgba Rotate(Rgba src, int rot)
+        {
+            int r = ((rot % 360) + 360) % 360;
+            if (r == 0) return src;
+
+            int sw = src.Width, sh = src.Height;
+            byte[] s = src.Pixels;
+
+            bool swap = r != 180;
+            int dw = swap ? sh : sw;
+            int dh = swap ? sw : sh;
+            var outImg = new Rgba(dw, dh);
+            byte[] o = outImg.Pixels;
+            for (int dy = 0; dy < dh; dy++)
+            for (int dx = 0; dx < dw; dx++)
+            {
+                int sx, sy;
+                if (r == 180)
+                {
+                    sx = sw - 1 - dx;
+                    sy = sh - 1 - dy;
+                }
+                else if (r == 90)
+                {
+                    sx = sw - 1 - dy;
+                    sy = dx;
+                }
+                else
+                {
+                    sx = dy;
+                    sy = sh - 1 - dx;
+                }
+                Copy(s, (sy * sw + sx) * 4, o, (dy * dw + dx) * 4);
+            }
+            return outImg;
+        }
+
+        private static void Copy(byte[] src, int si, byte[] dst, int di)
+        {
+            dst[di] = src[si];
+            dst[di + 1] = src[si + 1];
+            dst[di + 2] = src[si + 2];
+            dst[di + 3] = src[si + 3];
         }
     }
 }
