@@ -41,6 +41,8 @@ namespace LeagueTablecloth
             foreach (var layer in layers)
             {
                 var src = layer.Source;
+                if (src.Width != layer.W || src.Height != layer.H)
+                    src = Resize(src, layer.W, layer.H);
                 if (layer.Rot != 0)
                     src = Rotate(src, layer.Rot);
                 CompositeOver(dst, src, layer.X, layer.Y);
@@ -134,5 +136,46 @@ namespace LeagueTablecloth
             dst[di + 2] = src[si + 2];
             dst[di + 3] = src[si + 3];
         }
+
+        public static Rgba Resize(Rgba src, int w, int h)
+        {
+            if (src.Width == w && src.Height == h) return src;
+            var outImg = new Rgba(w, h);
+            byte[] o = outImg.Pixels;
+            byte[] s = src.Pixels;
+            double fx = src.Width / (double)w;
+            double fy = src.Height / (double)h;
+            for (int y = 0; y < h; y++)
+            {
+                double syf = (y + 0.5) * fy - 0.5;
+                int sy0 = (int)Math.Floor(syf);
+                double wy = syf - sy0;
+                int sy1 = Clamp(sy0 + 1, 0, src.Height - 1);
+                sy0 = Clamp(sy0, 0, src.Height - 1);
+                for (int x = 0; x < w; x++)
+                {
+                    double sxf = (x + 0.5) * fx - 0.5;
+                    int sx0 = (int)Math.Floor(sxf);
+                    double wx = sxf - sx0;
+                    int sx1 = Clamp(sx0 + 1, 0, src.Width - 1);
+                    sx0 = Clamp(sx0, 0, src.Width - 1);
+
+                    int i00 = (sy0 * src.Width + sx0) * 4;
+                    int i01 = (sy0 * src.Width + sx1) * 4;
+                    int i10 = (sy1 * src.Width + sx0) * 4;
+                    int i11 = (sy1 * src.Width + sx1) * 4;
+                    int oi = (y * w + x) * 4;
+                    for (int c = 0; c < 4; c++)
+                    {
+                        double top = s[i00 + c] * (1 - wx) + s[i01 + c] * wx;
+                        double bot = s[i10 + c] * (1 - wx) + s[i11 + c] * wx;
+                        o[oi + c] = (byte)Math.Round(top * (1 - wy) + bot * wy);
+                    }
+                }
+            }
+            return outImg;
+        }
+
+        private static int Clamp(int v, int lo, int hi) => v < lo ? lo : (v > hi ? hi : v);
     }
 }
