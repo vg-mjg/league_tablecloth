@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyName>league_tablecloth</AssemblyName>
+    <RootNamespace>LeagueTablecloth</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+
+    <BepInExCore>$(BepInExRoot)/core</BepInExCore>
+    <BepInExInterop>$(BepInExRoot)/interop</BepInExInterop>
+
+    <MjslibDll Condition="'$(MjslibDll)' == ''">$(BepInExRoot)/plugins/Mjslib.dll</MjslibDll>
+  </PropertyGroup>
+
+  <Target Name="ValidateBepInExReferences" BeforeTargets="ResolveReferences">
+    <Error
+      Condition="'$(BepInExRoot)' == ''"
+      Text="Set BepInExRoot to your local BepInEx folder. Example: dotnet build Plugin/Plugin.csproj -c Release -p:BepInExRoot=/path/to/BepInEx, or copy Directory.Build.props.example to Directory.Build.props." />
+    <Error
+      Condition="'$(BepInExRoot)' != '' and !Exists('$(BepInExCore)/BepInEx.Core.dll')"
+      Text="BepInExRoot '$(BepInExRoot)' does not contain core/BepInEx.Core.dll." />
+    <Error
+      Condition="'$(BepInExRoot)' != '' and !Exists('$(BepInExInterop)/Assembly-CSharp.dll')"
+      Text="BepInExRoot '$(BepInExRoot)' does not contain interop/Assembly-CSharp.dll." />
+    <Error
+      Condition="!Exists('$(MjslibDll)')"
+      Text="Mjslib.dll not found at '$(MjslibDll)'. Install mjslib under BepInEx/plugins, or pass -p:MjslibDll=/path/to/Mjslib.dll." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="BepInEx.Core">
+      <HintPath>$(BepInExCore)/BepInEx.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx.Unity.IL2CPP">
+      <HintPath>$(BepInExCore)/BepInEx.Unity.IL2CPP.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExCore)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(BepInExCore)/Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppInterop.Common">
+      <HintPath>$(BepInExCore)/Il2CppInterop.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(BepInExInterop)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(BepInExInterop)/Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppSystem">
+      <HintPath>$(BepInExInterop)/Il2CppSystem.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(BepInExInterop)/UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.ImageConversionModule">
+      <HintPath>$(BepInExInterop)/UnityEngine.ImageConversionModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(BepInExInterop)/UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(BepInExInterop)/UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="Mjslib">
+      <HintPath>$(MjslibDll)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
