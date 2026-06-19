@@ -89,4 +89,10 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="tablecloth.lua">
+      <LogicalName>LeagueTablecloth.tablecloth.lua</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>
