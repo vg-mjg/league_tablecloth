@@ -11,11 +11,10 @@ namespace LeagueTablecloth
 {
     [BepInPlugin(Guid, Name, Version)]
     [BepInDependency("vg.mjg.mjslib")]
-    public class Plugin : BasePlugin
+    public partial class Plugin : BasePlugin
     {
         public const string Guid = "vg.mjg.league_tablecloth";
         public const string Name = "league_tablecloth";
-        public const string Version = "0.1.0";
 
         internal static Plugin? Instance;
 

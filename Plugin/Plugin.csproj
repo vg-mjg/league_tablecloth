@@ -3,6 +3,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>league_tablecloth</AssemblyName>
     <RootNamespace>LeagueTablecloth</RootNamespace>
+    <Version>0.1.0</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -84,6 +85,19 @@
       <Private>false</Private>
     </Reference>
   </ItemGroup>
+
+  <Target Name="GenerateVersionConstant" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <VersionConstantFile>$(IntermediateOutputPath)VersionConstant.g.cs</VersionConstantFile>
+    </PropertyGroup>
+    <WriteLinesToFile
+      File="$(VersionConstantFile)"
+      Lines="namespace LeagueTablecloth { public partial class Plugin { public const string Version = &quot;$(Version)&quot;%3B } }"
+      Overwrite="true" />
+    <ItemGroup>
+      <Compile Include="$(VersionConstantFile)" />
+    </ItemGroup>
+  </Target>
 
   <ItemGroup>
     <EmbeddedResource Include="tablecloth.lua">

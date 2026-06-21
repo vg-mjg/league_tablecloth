@@ -40,3 +40,5 @@ dotnet build Plugin/Plugin.csproj -c Release -p:BepInExRoot=/path/to/BepInEx -p:
 By default it will look for `Mjslib.dll` in the `<BepInExRoot>/plugins` directory, so if you followed the installation instructions, you only need to set `BepInExRoot`.
 
 For a local `BepInExRoot` default, copy `Directory.Build.props.example` to `Directory.Build.props` and edit the `BepInExRoot` path inside.
+
+To produce the release zip run: `scripts/dist.sh`. Any extra arguments are forwarded to `dotnet build`.
