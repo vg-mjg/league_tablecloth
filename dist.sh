@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$repo_root"
 
-project="Plugin/Plugin.csproj"
+project="league_tablecloth.csproj"
 assembly="league_tablecloth"
 
 echo "Building $project (Release)"
@@ -17,7 +17,7 @@ stage="dist/$assembly"
 rm -rf "$stage"
 mkdir -p "$stage"
 
-cp "Plugin/bin/Release/$assembly.dll" "$stage/"
+cp "bin/Release/$assembly.dll" "$stage/"
 cp -r assets "$stage/assets"
 
 zip_name="$assembly-$version.zip"

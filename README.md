@@ -34,11 +34,11 @@ Modified PNG triangles should be loaded again without restarting the game. You j
 Use the dotnet toolchain (>=net6.0) to build it.
 
 ```sh
-dotnet build Plugin/Plugin.csproj -c Release -p:BepInExRoot=/path/to/BepInEx -p:MjslibDll=/path/to/Mjslib.dll
+dotnet build -c Release -p:BepInExRoot=/path/to/BepInEx -p:MjslibDll=/path/to/Mjslib.dll
 ```
 
 By default it will look for `Mjslib.dll` in the `<BepInExRoot>/plugins` directory, so if you followed the installation instructions, you only need to set `BepInExRoot`.
 
 For a local `BepInExRoot` default, copy `Directory.Build.props.example` to `Directory.Build.props` and edit the `BepInExRoot` path inside.
 
-To produce the release zip run: `scripts/dist.sh`. Any extra arguments are forwarded to `dotnet build`.
+To produce the release zip run: `./dist.sh`. Any extra arguments are forwarded to `dotnet build`.

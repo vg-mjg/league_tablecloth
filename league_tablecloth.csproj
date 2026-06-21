@@ -18,7 +18,7 @@
   <Target Name="ValidateBepInExReferences" BeforeTargets="ResolveReferences">
     <Error
       Condition="'$(BepInExRoot)' == ''"
-      Text="Set BepInExRoot to your local BepInEx folder. Example: dotnet build Plugin/Plugin.csproj -c Release -p:BepInExRoot=/path/to/BepInEx, or copy Directory.Build.props.example to Directory.Build.props." />
+      Text="Set BepInExRoot to your local BepInEx folder. Example: dotnet build -c Release -p:BepInExRoot=/path/to/BepInEx, or copy Directory.Build.props.example to Directory.Build.props." />
     <Error
       Condition="'$(BepInExRoot)' != '' and !Exists('$(BepInExCore)/BepInEx.Core.dll')"
       Text="BepInExRoot '$(BepInExRoot)' does not contain core/BepInEx.Core.dll." />
@@ -100,7 +100,7 @@
   </Target>
 
   <ItemGroup>
-    <EmbeddedResource Include="tablecloth.lua">
+    <EmbeddedResource Include="src/tablecloth.lua">
       <LogicalName>LeagueTablecloth.tablecloth.lua</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
