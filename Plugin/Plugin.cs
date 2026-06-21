@@ -15,7 +15,7 @@ namespace LeagueTablecloth
     {
         public const string Guid = "vg.mjg.league_tablecloth";
         public const string Name = "league_tablecloth";
-        public const string Version = "0.3.0";
+        public const string Version = "0.1.0";
 
         internal static Plugin? Instance;
 
@@ -24,9 +24,9 @@ namespace LeagueTablecloth
             Instance = this;
             Log.LogInfo($"{Name} {Version} loading; deferring Lua setup to Mjslib.Lua.Ready");
 
+            // resolve the asset directory (assets/ beside this DLL) and load players.json
             var dllDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
             Tablecloth.Init(Path.Combine(dllDir, "assets"));
-
             Lua.Ready(OnLuaReady);
         }
 
@@ -46,6 +46,8 @@ namespace LeagueTablecloth
             Log.LogInfo("queued embedded tablecloth.lua chunk");
         }
 
+        // read the embedded game-seam Lua, shipped as a resource (csproj LogicalName) so the pack has
+        // no loose Lua file and the chunk no longer needs to self-locate a path
         private static string? LoadEmbeddedLua()
         {
             var asm = Assembly.GetExecutingAssembly();
@@ -55,6 +57,10 @@ namespace LeagueTablecloth
             return reader.ReadToEnd();
         }
 
+        // Lua LeagueTablecloth.compose(nicknames, viewerSeat)
+        // slot 1 is a 4-array of absolute-seat (E/S/W/N) nicknames,
+        // slot 2 the viewer's seat (1..4)
+        // resolves, composites, caches and rotates into the reused display texture, pushed back to Lua
         private static int Compose(IntPtr L)
         {
             try
@@ -81,6 +87,8 @@ namespace LeagueTablecloth
             }
         }
 
+        // Lua LeagueTablecloth.release()
+        // free our display texture and drop the cached base on match teardown
         private static int Release(IntPtr L)
         {
             try
@@ -94,6 +102,9 @@ namespace LeagueTablecloth
             return 0;
         }
 
+        // read a 4-array of nicknames from the Lua table at slot idx in absolute seat order
+        // missing or non-string entries become "" (which resolves to default.png)
+        // idx is a positive (absolute) index, so it stays valid across the rawgeti/pop pushes
         private static string[] ReadNicknames(IntPtr L, int idx)
         {
             var result = new string[4] { "", "", "", "" };

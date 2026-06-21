@@ -1,4 +1,13 @@
-local TAG = "[tablecloth]"
+-- Lua side adapter that reads the game state and delegates texture composition to native calls:
+--   LeagueTablecloth.compose(nicknames, viewerSeat) -> Texture2D
+--   LeagueTablecloth.release()
+--
+-- on match entry it discovers the cloth MeshRenderer, reads the four nicknames + viewer seat,
+-- asks compose for the oriented texture, and SetTextures it onto the renderer
+-- on a perspective change it re-asks compose for the new seat and re-SetTextures the held materials
+-- on match teardown it calls release so our textures don't accumulate across matches
+
+local TAG = "[league_tablecloth]"
 
 local function log(msg)
 	MjsLua.log(TAG .. " " .. msg)
@@ -6,14 +15,15 @@ end
 
 if type(LeagueTablecloth) ~= "table" or type(LeagueTablecloth.compose) ~= "function" then
 	log(
-		"LeagueTablecloth.compose missing -- is league_tablecloth.dll installed and loaded after "
-			.. "mjslib? Tablecloth disabled."
+		"LeagueTablecloth.compose missing. Is league_tablecloth.dll installed and loaded after mjslib? Tablecloth disabled."
 	)
 	return
 end
 
+-- the current match's cloth material(s)
 local clothMaterials = nil
 
+-- the four players' nicknames in absolute seat order (E/S/W/N = player_datas[1..4]) as a plain array for compose
 local function readNicknames()
 	local nicks = { "", "", "", "" }
 	local desktop = rawget(_G, "DesktopMgr")
@@ -31,6 +41,9 @@ local function readNicknames()
 	return nicks
 end
 
+-- the viewer's absolute seat (1..4 = E/S/W/N)
+-- DesktopMgr.Inst.seat is the local/main seat
+-- fall back to 1 if it is unreadable so the cloth still shows in a sensible orientation
 local function currentSeat()
 	local desktop = rawget(_G, "DesktopMgr")
 	local inst = desktop and desktop.Inst
@@ -41,6 +54,8 @@ local function currentSeat()
 	return seat
 end
 
+-- walk every MeshRenderer under the desktop_model
+-- logging child/material/texture-property names so the exact cloth renderer stays documented
 local function discoverMaterials(model)
 	local mats = {}
 	if model == nil then
@@ -85,6 +100,7 @@ local function discoverMaterials(model)
 				)
 			)
 
+			-- the "mid" child carries the table centre's own material, not the printed cloth
 			if childName ~= "mid" and mat ~= nil then
 				mats[#mats + 1] = mat
 			end
@@ -94,6 +110,7 @@ local function discoverMaterials(model)
 	return mats
 end
 
+-- ask C# for the oriented cloth and SetTexture it onto every held cloth material
 local function applyForSeat()
 	if clothMaterials == nil or #clothMaterials == 0 then
 		return false
@@ -118,6 +135,7 @@ local function applyForSeat()
 	return true
 end
 
+-- discover the cloth renderer for this match, then orient+apply for the current seat
 local function applyTablecloth()
 	local scene = rawget(_G, "Scene_MJ")
 	local inst = scene and scene.Inst
@@ -145,11 +163,13 @@ local function safeApply()
 	end
 end
 
+-- where the tablecloth is applied
 MjsLua.hook("DesktopMgr.InitRoom", function(orig, self, ...)
 	orig(self, ...)
 	safeApply()
 end)
 
+-- where the perspective changes
 MjsLua.hook("DesktopMgr.ChangeMainBody", function(orig, self, ...)
 	orig(self, ...)
 	local ok, err = pcall(applyForSeat)
@@ -158,6 +178,7 @@ MjsLua.hook("DesktopMgr.ChangeMainBody", function(orig, self, ...)
 	end
 end)
 
+-- needed to support 'follow dealer' which sets the perspective directly
 MjsLua.hook("DesktopMgr.RefreshSeatOnNewRound", function(orig, self, ...)
 	orig(self, ...)
 	local ok, err = pcall(applyForSeat)
@@ -166,6 +187,7 @@ MjsLua.hook("DesktopMgr.RefreshSeatOnNewRound", function(orig, self, ...)
 	end
 end)
 
+-- teardown on match end
 MjsLua.hook("Scene_MJ._onQuit", function(orig, self, ...)
 	clothMaterials = nil
 	local ok, err = pcall(function()

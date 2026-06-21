@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>league_tablecloth</AssemblyName>
@@ -12,7 +11,6 @@
 
     <BepInExCore>$(BepInExRoot)/core</BepInExCore>
     <BepInExInterop>$(BepInExRoot)/interop</BepInExInterop>
-
     <MjslibDll Condition="'$(MjslibDll)' == ''">$(BepInExRoot)/plugins/Mjslib.dll</MjslibDll>
   </PropertyGroup>
 
@@ -68,12 +66,10 @@
       <HintPath>$(BepInExInterop)/UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
-
     <Reference Include="UnityEngine.ImageConversionModule">
       <HintPath>$(BepInExInterop)/UnityEngine.ImageConversionModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
-
     <Reference Include="UnityEngine.PhysicsModule">
       <HintPath>$(BepInExInterop)/UnityEngine.PhysicsModule.dll</HintPath>
       <Private>false</Private>
@@ -94,5 +90,4 @@
       <LogicalName>LeagueTablecloth.tablecloth.lua</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-
 </Project>

@@ -2,6 +2,7 @@ using System;
 
 namespace LeagueTablecloth
 {
+    // an RGBA8888 image buffer in top-left, row-major order (row 0 = top), same as PIL
     internal sealed class Rgba
     {
         public readonly int Width;
@@ -25,16 +26,19 @@ namespace LeagueTablecloth
         }
     }
 
+    // one layer of a composite: source image, the size to resize it to before rotation,
+    // the rotation, and the top-left destination offset to paste at
     internal struct Layer
     {
         public Rgba Source;
-        public int X, Y;
-        public int W, H;
-        public int Rot;
+        public int X, Y; // top-left paste offset in the destination
+        public int W, H; // resize source to this before rotating
+        public int Rot; // positive = counter-clockwise (PIL convention)
     }
 
     internal static class Compositor
     {
+        // compose layers bottom to top onto a fresh transparent canvas and return it
         public static Rgba Compose(int size, Layer[] layers)
         {
             var dst = new Rgba(size, size);
@@ -50,11 +54,15 @@ namespace LeagueTablecloth
             return dst;
         }
 
+        // PIL's paste blend
         private static byte Blend(int dst, int src, int a)
         {
             return (byte)((dst * (255 - a) + src * a + 127) / 255);
         }
 
+        // alpha composite src onto dst at top-left (dstX, dstY),
+        // using the source's own alpha as the mask, exactly like PIL's paste(im, box, im)
+        // out of bounds regions are clipped
         public static void CompositeOver(Rgba dst, Rgba src, int dstX, int dstY)
         {
             int x0 = Math.Max(0, dstX);
@@ -92,14 +100,17 @@ namespace LeagueTablecloth
             }
         }
 
+        // rotate by rot degrees with the canvas expanded to fit, like PIL's rotate(rot, expand=True)
+        // only the multiples of 90 we use (0, 90, 180, -90/270) work and positive is counter-clockwise
         public static Rgba Rotate(Rgba src, int rot)
         {
-            int r = ((rot % 360) + 360) % 360;
+            int r = ((rot % 360) + 360) % 360; // normalize to 0/90/180/270
             if (r == 0) return src;
 
             int sw = src.Width, sh = src.Height;
             byte[] s = src.Pixels;
 
+            // 90 and 270 swap width/height, 180 keeps them
             bool swap = r != 180;
             int dw = swap ? sh : sw;
             int dh = swap ? sw : sh;
@@ -117,12 +128,12 @@ namespace LeagueTablecloth
                 else if (r == 90)
                 {
                     sx = sw - 1 - dy;
-                    sy = dx;
+                    sy = dx; // CCW src(sw-1-dy, dx)
                 }
                 else
                 {
                     sx = dy;
-                    sy = sh - 1 - dx;
+                    sy = sh - 1 - dx; // 270/-90 CW src(dy, sh-1-dx)
                 }
                 Copy(s, (sy * sw + sx) * 4, o, (dy * dw + dx) * 4);
             }
@@ -137,6 +148,8 @@ namespace LeagueTablecloth
             dst[di + 3] = src[si + 3];
         }
 
+        // bilinear resize
+        // not actually used here as long as the images are 1568x786 and the base is 2048x2048
         public static Rgba Resize(Rgba src, int w, int h)
         {
             if (src.Width == w && src.Height == h) return src;

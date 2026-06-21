@@ -6,8 +6,15 @@ using UnityEngine;
 
 namespace LeagueTablecloth
 {
+    // here's where quadrant composition happens
+    // given the four absolute-seat nicknames and the viewer's seat, it resolves each seat's triangle,
+    // composes the base + four triangles onto the fixed quadrant geometry,
+    // and rotates the result into a single reused display texture for the viewer's perspective
+    // state is per-match and single-threaded
     internal static class Tablecloth
     {
+        // each triangle source is 1568x786, 90/-90 rotations swap it to 786x1568
+        // nicknames arrive in absolute seat order E/S/W/N
         private const int SIZE = 2048;
         private const int TRI_W = 1568;
         private const int TRI_H = 786;
@@ -20,10 +27,10 @@ namespace LeagueTablecloth
 
         private static readonly Quadrant[] Quadrants =
         {
-            new Quadrant(240, 1020, 0),
-            new Quadrant(1020, 240, 90),
-            new Quadrant(235, 240, 180),
-            new Quadrant(240, 240, -90),
+            new Quadrant(240, 1020, 0), // east
+            new Quadrant(1020, 240, 90), // south
+            new Quadrant(235, 240, 180), // west
+            new Quadrant(240, 240, -90), // north
         };
 
         private const int ROTATION_SIGN = -1;
@@ -34,8 +41,10 @@ namespace LeagueTablecloth
         private static Rgba? _baseRgba;
         private static string? _baseKey;
 
+        // live GPU texture the material shows (base rotated for the current seat)
         private static Texture2D? _displayTex;
 
+        // a decoded source layer plus the file's last-write time when it was decoded
         private readonly struct CachedLayer
         {
             public readonly Rgba Data;
@@ -43,6 +52,7 @@ namespace LeagueTablecloth
             public CachedLayer(Rgba data, DateTime stamp) { Data = data; Stamp = stamp; }
         }
 
+        // decoded source layers by absolute path and validated against mtime
         private static readonly Dictionary<string, CachedLayer> DecodeCache =
             new Dictionary<string, CachedLayer>();
 
@@ -53,6 +63,8 @@ namespace LeagueTablecloth
             _nicknameMap = Identity.LoadNicknameMap(Path.Combine(_assetDir, "players.json"));
         }
 
+        // resolve each seat's triangle from nicknames (E/S/W/N order), compose or reuse the base for that tuple,
+        // rotate it for viewerSeat into the single reused display texture, return it
         public static Texture2D? Compose(string[] nicknames, int viewerSeat)
         {
             var triangles = new string[4];
@@ -84,13 +96,14 @@ namespace LeagueTablecloth
             }
 
             if (viewerSeat < 1 || viewerSeat > 4) viewerSeat = 1;
-            int k = (((ROTATION_SIGN * (viewerSeat - 1)) % 4) + 4) % 4;
+            int k = (((ROTATION_SIGN * (viewerSeat - 1)) % 4) + 4) % 4; // 0..3 quarter-turns CCW
             var rotated = Compositor.Rotate(_baseRgba, k * 90);
             _displayTex = WriteTexture(rotated, _displayTex);
             Log($"oriented cloth for seat {viewerSeat} (rotation k={k})");
             return _displayTex;
         }
 
+        // free our display texture and drop the cached base so leaving a match accumulates nothing
         public static void Release()
         {
             if (_displayTex != null)
@@ -103,6 +116,7 @@ namespace LeagueTablecloth
             _baseKey = null;
         }
 
+        // decode the base + each seat's resolved triangle and compose them onto the fixed quadrant geometry
         private static Rgba? ComposeBase(string[] triangles)
         {
             var baseImg = Decode(Path.Combine(_assetDir, "base.png"));
@@ -122,6 +136,7 @@ namespace LeagueTablecloth
             return Compositor.Compose(SIZE, layers.ToArray());
         }
 
+        // decode a PNG to a top-left-origin RGBA buffer, caching successful decodes by (path, mtime)
         private static Rgba? Decode(string path)
         {
             if (!File.Exists(path))
@@ -145,6 +160,7 @@ namespace LeagueTablecloth
             try
             {
                 var bytes = File.ReadAllBytes(path);
+                // RGBA32, linear:false (sRGB colour data, not a linear/normal map)
                 var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false, false);
                 bool ok = ImageConversion.LoadImage(tex, (Il2CppStructArray<byte>)bytes, false);
                 if (!ok)
@@ -164,6 +180,8 @@ namespace LeagueTablecloth
             return result;
         }
 
+        // Unity's GetPixels32 returns bottom-left, row-major
+        // the compositor work top-left, so flip rows on the way in
         private static Rgba ToTopLeftRgba(Texture2D tex)
         {
             int w = tex.width, h = tex.height;
@@ -172,7 +190,7 @@ namespace LeagueTablecloth
             byte[] d = img.Pixels;
             for (int r = 0; r < h; r++)
             {
-                int srcRow = (h - 1 - r) * w;
+                int srcRow = (h - 1 - r) * w; // bottom-left row matching this top-left row
                 int dstRow = r * w * 4;
                 for (int c = 0; c < w; c++)
                 {
@@ -187,6 +205,7 @@ namespace LeagueTablecloth
             return img;
         }
 
+        // build (or refill) a Texture2D from a top-left RGBA buffer
         [ThreadStatic] private static byte[]? _rowFlipScratch;
 
         private static Texture2D WriteTexture(Rgba img, Texture2D? dest)
