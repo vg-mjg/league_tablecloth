@@ -12,7 +12,7 @@
 
     <BepInExCore>$(BepInExRoot)/core</BepInExCore>
     <BepInExInterop>$(BepInExRoot)/interop</BepInExInterop>
-    <MjslibDll Condition="'$(MjslibDll)' == ''">$(BepInExRoot)/plugins/Mjslib.dll</MjslibDll>
+    <MjslibDll Condition="'$(MjslibDll)' == ''">$(BepInExRoot)/plugins/mjslib.dll</MjslibDll>
   </PropertyGroup>
 
   <Target Name="ValidateBepInExReferences" BeforeTargets="ResolveReferences">
@@ -27,7 +27,7 @@
       Text="BepInExRoot '$(BepInExRoot)' does not contain interop/Assembly-CSharp.dll." />
     <Error
       Condition="!Exists('$(MjslibDll)')"
-      Text="Mjslib.dll not found at '$(MjslibDll)'. Install mjslib under BepInEx/plugins, or pass -p:MjslibDll=/path/to/Mjslib.dll." />
+      Text="mjslib.dll not found at '$(MjslibDll)'. Install mjslib under BepInEx/plugins, or pass -p:MjslibDll=/path/to/mjslib.dll." />
   </Target>
 
   <ItemGroup>

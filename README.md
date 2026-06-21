@@ -12,7 +12,7 @@ Next, download `league_tablecloth.zip` [from releases](https://github.com/vg-mjg
 
 ```text
 BepInEx/plugins/
-  Mjslib.dll
+  mjslib.dll
   league_tablecloth/
     league_tablecloth.dll
     assets/
@@ -34,10 +34,10 @@ Modified PNG triangles should be loaded again without restarting the game. You j
 Use the dotnet toolchain (>=net6.0) to build it.
 
 ```sh
-dotnet build -c Release -p:BepInExRoot=/path/to/BepInEx -p:MjslibDll=/path/to/Mjslib.dll
+dotnet build -c Release -p:BepInExRoot=/path/to/BepInEx -p:MjslibDll=/path/to/mjslib.dll
 ```
 
-By default it will look for `Mjslib.dll` in the `<BepInExRoot>/plugins` directory, so if you followed the installation instructions, you only need to set `BepInExRoot`.
+By default it will look for `mjslib.dll` in the `<BepInExRoot>/plugins` directory, so if you followed the installation instructions, you only need to set `BepInExRoot`.
 
 For a local `BepInExRoot` default, copy `Directory.Build.props.example` to `Directory.Build.props` and edit the `BepInExRoot` path inside.
 
